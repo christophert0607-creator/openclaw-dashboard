@@ -18,6 +18,12 @@ app.get('/api/projects', (req, res) => {
 app.get('/api/session_status', (req, res) => {
   exec('openclaw status', (error, stdout, stderr) => {
     if (error) {
+      console.error(`error: ${error.message}`);
+      res.status(500).json({ error: stderr });
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
       res.status(500).json({ error: stderr });
       return;
     }
@@ -28,6 +34,12 @@ app.get('/api/session_status', (req, res) => {
 app.get('/api/sessions_list', (req, res) => {
   exec('openclaw sessions', (error, stdout, stderr) => {
     if (error) {
+      console.error(`error: ${error.message}`);
+      res.status(500).json({ error: stderr });
+      return;
+    }
+    if (stderr) {
+      console.error(`stderr: ${stderr}`);
       res.status(500).json({ error: stderr });
       return;
     }
