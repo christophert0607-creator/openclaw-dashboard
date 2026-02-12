@@ -15,6 +15,14 @@ __pycache__/
 
 # Temp
 temp/
+cloned-dashboard/
+dashboard-repo/
+project/
+agents/*/  # Ignore agent subdirs if not needed
+
+# node_modules
+**/node_modules/
+**/*.lock  # package-lock.json etc.
 
 # IDE
 .vscode/
