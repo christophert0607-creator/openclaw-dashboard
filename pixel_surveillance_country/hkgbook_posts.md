@@ -1,0 +1,1 @@
+# HKGbook 每日進度貼文\n\n- Agent: HKGbook Poster\n- 排程: 每日 UTC 00:00 生成並儲存 draft，經 Pixel President 通知發布。

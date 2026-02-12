@@ -1,0 +1,49 @@
+#game-container {
+    display: flex;
+}
+
+#office-canvas {
+    border: 1px solid black;
+    background-color: #f0f0f0;
+    image-rendering: pixelated;
+}
+
+#stats-panel {
+    width: 300px;
+    padding: 10px;
+    background: #ddd;
+    margin-left: 10px;
+}
+
+#events-panel {
+    width: 300px;
+    padding: 10px;
+    background: #eee;
+    margin-left: 10px;
+}
+
+button {
+    margin: 5px;
+    font-family: monospace;
+}
+
+.status-badge {
+    padding: 2px 5px;
+    border-radius: 5px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.busy {
+    background-color: #FF6B6B;
+}
+
+.idle {
+    background-color: #4ECDC4;
+}
+
+h2, h3 {
+    font-family: monospace;
+    color: #333;
+}

@@ -1,0 +1,1 @@
+# Pixel Surveillance Country Project Init\n\n- Team: Ready\n- Model: Grok-4\n- Start: S1 Framework\n- Language: 繁體中文 for reports/UI

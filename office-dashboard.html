@@ -1,0 +1,120 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;8-Bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #87CEEB; /* Sky blue */
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        .office {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 70%, #228B22 100%); /* Sky to grass */
+        }
+        .desk {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            background-color: #8B4513; /* Brown desk */
+            border: 2px solid #654321;
+            bottom: 10%;
+        }
+        .character {
+            position: absolute;
+            bottom: 90px;
+            left: 10px;
+            width: 32px;
+            height: 48px;
+            background-image: url('sprites/salaryman.png'); /* Assume downloaded */
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+        .ol {
+            background-image: url('sprites/ol.png');
+        }
+        .computer {
+            position: absolute;
+            bottom: 85px;
+            left: 50px;
+            width: 20px;
+            height: 15px;
+            background-color: #333;
+            border: 1px solid #000;
+        }
+        .typing {
+            animation: typing 1s infinite;
+        }
+        @keyframes typing {
+            0%, 50% { transform: translateY(0); }
+            25%, 75% { transform: translateY(-2px); }
+        }
+        .idle .character::after {
+            content: 'ZZZ';
+            position: absolute;
+            top: -10px;
+            left: 0;
+            font-size: 12px;
+            color: #000;
+            animation: float 2s infinite ease-in-out;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #000;
+            font-size: 14px;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="office" id="office"&gt;
+        &lt;div class="status" id="status"&gt;Active Sessions: Loading...&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;script&gt;
+        // Simulate API fetch for sessions
+        async function fetchSessions() {
+            // For real integration, fetch from local server or API
+            // For now, simulate based on current knowledge: 24 sessions
+            return { active: 24 };
+        }
+        function updateDashboard(sessions) {
+            const numDesks = Math.min(6, Math.max(4, Math.ceil(sessions.active / 4))); // Scale 4-6 desks
+            const office = document.getElementById('office');
+            office.innerHTML = '&lt;div class="status" id="status"&gt;Active Sessions: ' + sessions.active + '&lt;/div&gt;';
+            const deskWidth = window.innerWidth / numDesks;
+            for (let i = 0; i &lt; numDesks; i++) {
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                desk.style.left = (i * deskWidth) + 'px';
+                const char = document.createElement('div');
+                char.className = 'character ' + (i % 2 === 0 ? '' : 'ol');
+                const isBusy = Math.random() &lt; (sessions.active / 30); // Rough scale, adjust
+                if (isBusy) {
+                    char.parentNode.classList.add('typing'); // Wait, add to desk?
+                    const comp = document.createElement('div');
+                    comp.className = 'computer typing';
+                    desk.appendChild(comp);
+                } else {
+                    desk.classList.add('idle');
+                }
+                desk.appendChild(char);
+                office.appendChild(desk);
+            }
+        }
+        fetchSessions().then(updateDashboard);
+        // Periodically update every 30s
+        setInterval(() =&gt; fetchSessions().then(updateDashboard), 30000);
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

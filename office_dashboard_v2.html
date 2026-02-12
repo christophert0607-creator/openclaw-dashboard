@@ -1,0 +1,200 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Improved 8-Bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff; /* Alice blue for calm office */
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        .office {
+            position: relative;
+            width: 1024px;
+            height: 768px;
+            margin: 20px auto;
+            background: linear-gradient(to bottom, #87ceeb 70%, #90ee90 70%); /* Sky to green floor */
+            border: 8px solid #333; /* Thicker border for retro */
+            image-rendering: pixelated;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .desk {
+            position: absolute;
+            width: 100px;
+            height: 80px;
+            background: linear-gradient(#8b4513, #a0522d); /* Wood desk */
+            bottom: 60px;
+            border: 2px solid #654321;
+            image-rendering: pixelated;
+        }
+        .computer {
+            position: absolute;
+            bottom: 10px;
+            left: 30px;
+            width: 32px;
+            height: 32px;
+            background: url('ComputerSheet.png') 0 0 / 32px 32px; /* Assume sheet has multiple, use first */
+            image-rendering: pixelated;
+            animation: screen-glow 2s infinite alternate;
+        }
+        @keyframes screen-glow {
+            0% { box-shadow: 0 0 5px #00ff00; }
+            100% { box-shadow: 0 0 10px #00ff00; }
+        }
+        .worker {
+            position: absolute;
+            bottom: 5px;
+            left: 40px;
+            width: 16px;
+            height: 32px;
+            background-size: 64px 512px; /* Assume 4 frames wide, many rows */
+            image-rendering: pixelated;
+            transition: background-position 0.5s;
+        }
+        /* Different workers */
+        .worker1 { background-image: url('WorkerSheetBrownPurple.png'); }
+        .worker2 { background-image: url('WorkerSheetBrownWhite.png'); }
+        .worker3 { background-image: url('WorkerSheetYellowPurple.png'); }
+        .worker4 { background-image: url('WorkerSheetYellowWhite.png'); }
+        .worker5 { background-image: url('WorkerSheetBrownPurple.png'); }
+        .worker6 { background-image: url('WorkerSheetBrownWhite.png'); }
+        
+        /* Idle: assume row 0, frame 0 */
+        .idle .worker { background-position: 0 0; }
+        
+        /* Busy typing: assume row for typing, say offset -32*8 = -256 for row 8, and animate x 0 -16 -32 -48 */
+        .busy .worker {
+            background-position-y: -256px; /* Adjust based on actual sheet */
+            animation: typing 0.8s steps(4) infinite;
+        }
+        @keyframes typing {
+            0% { background-position-x: 0px; }
+            25% { background-position-x: -16px; }
+            50% { background-position-x: -32px; }
+            75% { background-position-x: -48px; }
+            100% { background-position-x: 0px; }
+        }
+        
+        .zzz {
+            position: absolute;
+            top: -15px;
+            left: 2px;
+            font-size: 10px;
+            color: #333;
+            font-weight: bold;
+            animation: float 3s ease-in-out infinite;
+            image-rendering: pixelated;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-10px) rotate(5deg); opacity: 1; }
+        }
+        
+        /* Partitions for Japanese office cubicles */
+        .partition {
+            position: absolute;
+            width: 4px;
+            height: 200px;
+            background: #696969;
+            bottom: 60px;
+            right: -2px;
+        }
+        
+        /* Positions for 6 desks */
+        .desk:nth-child(1) { left: 50px; }
+        .desk:nth-child(2) { left: 180px; }
+        .desk:nth-child(3) { left: 310px; }
+        .desk:nth-child(4) { left: 440px; }
+        .desk:nth-child(5) { left: 570px; }
+        .desk:nth-child(6) { left: 700px; }
+        
+        #status {
+            text-align: center;
+            color: #333;
+            font-size: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 24px;
+            color: #000;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px #fff;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="title"&gt;OpenClaw 8-Bit Office Dashboard&lt;/div&gt;
+    &lt;div class="office" id="office"&gt;
+        &lt;!-- Desks dynamically added --&gt;
+    &lt;/div&gt;
+    &lt;div id="status"&gt;Active Sessions: Loading... | Total Desks: 4-6&lt;/div&gt;
+    &lt;script&gt;
+        // For real integration: In a server setup, use fetch('/api/sessions') where backend runs 'openclaw sessions list' periodically
+        // Here, simulate based on recent sessions count
+        function getSessions() {
+            // Mock: random active sessions, up to 20 or so
+            const totalPossible = 20;
+            const active = Math.floor(Math.random() * totalPossible) + 1;
+            const sessions = [];
+            for (let i = 0; i &lt; active; i++) {
+                sessions.push({ id: i, status: Math.random() &gt; 0.5 ? 'busy' : 'idle' });
+            }
+            return sessions;
+        }
+
+        function updateDashboard() {
+            const office = document.getElementById('office');
+            const sessions = getSessions();
+            const numDesks = Math.min(Math.max(sessions.length, 4), 6); // Scale to 4-6
+            office.innerHTML = '';
+
+            for (let i = 0; i &lt; numDesks; i++) {
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                
+                const partition = document.createElement('div');
+                partition.className = 'partition';
+                desk.appendChild(partition);
+                
+                const computer = document.createElement('div');
+                computer.className = 'computer';
+                desk.appendChild(computer);
+
+                const workerContainer = document.createElement('div');
+                workerContainer.className = 'worker-container';
+                
+                const workerDiv = document.createElement('div');
+                workerDiv.className = `worker worker${(i % 6) + 1}`;
+                const session = sessions[i] || { status: 'idle' };
+                if (session.status === 'busy') {
+                    workerContainer.classList.add('busy');
+                } else {
+                    workerContainer.classList.add('idle');
+                    const zzz = document.createElement('div');
+                    zzz.className = 'zzz';
+                    zzz.textContent = 'ZZZ';
+                    workerDiv.appendChild(zzz);
+                }
+                workerContainer.appendChild(workerDiv);
+                desk.appendChild(workerContainer);
+                
+                office.appendChild(desk);
+            }
+
+            document.getElementById('status').innerHTML = `Active Sessions: ${sessions.length} | Desks Scaled: ${numDesks} | Last Update: ${new Date().toLocaleTimeString()}`;
+        }
+
+        // Simulate periodic fetch - in real, setInterval(fetch('/sessions.json'), 30000);
+        updateDashboard();
+        setInterval(updateDashboard, 5000); // Update every 5s for demo
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

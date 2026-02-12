@@ -1,0 +1,188 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Improved 8-Bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #F0F8FF; /* Light blue for modern office */
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        .office {
+            position: relative;
+            width: 1000px; /* Wider for more desks */
+            height: 600px;
+            margin: 20px auto;
+            background: linear-gradient(to bottom, #87CEEB 70%, #90EE90 70%); /* Sky to green floor */
+            border: 4px solid #000;
+            image-rendering: pixelated;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .desk {
+            position: absolute;
+            width: 100px; /* Larger desks */
+            height: 60px;
+            background: #8B4513; /* Brown desk */
+            bottom: 50px;
+            border: 1px solid #654321;
+        }
+        .computer {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            width: 32px; /* Larger for visibility */
+            height: 32px;
+            background: url('sprites/ComputerSheet.png') 0 0;
+            image-rendering: pixelated;
+            animation: screenGlow 2s infinite alternate;
+        }
+        @keyframes screenGlow {
+            0% { box-shadow: 0 0 5px #00f; }
+            100% { box-shadow: 0 0 10px #0ff; }
+        }
+        .worker {
+            position: absolute;
+            bottom: 70px; /* Above desk */
+            left: 30px;
+            width: 16px;
+            height: 32px;
+            image-rendering: pixelated;
+        }
+        .busy .worker {
+            animation: typing 0.5s infinite;
+        }
+        .idle .worker {
+            animation: idleBob 3s infinite ease-in-out;
+        }
+        @keyframes typing {
+            0%, 100% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-1px) scaleX(1.02); } /* Hands moving */
+            75% { transform: translateY(-1px) scaleX(0.98); }
+        }
+        @keyframes idleBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+        .zzz {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: #333;
+            font-weight: bold;
+            animation: floatZZZ 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes floatZZZ {
+            0%, 100% { transform: translateX(-50%) translateY(0) opacity: 0.7; }
+            50% { transform: translateX(-50%) translateY(-10px) opacity: 1; }
+        }
+        .watercooler {
+            position: absolute;
+            bottom: 0;
+            right: 50px;
+            width: 32px;
+            height: 64px;
+            background: url('sprites/WatercoolerSheet.png') 0 0;
+            image-rendering: pixelated;
+        }
+        /* Position desks for 6 */
+        .desk:nth-of-type(1) { left: 50px; }
+        .desk:nth-of-type(2) { left: 180px; }
+        .desk:nth-of-type(3) { left: 310px; }
+        .desk:nth-of-type(4) { left: 440px; }
+        .desk:nth-of-type(5) { left: 570px; }
+        .desk:nth-of-type(6) { left: 700px; }
+        #status {
+            text-align: center;
+            color: #000;
+            font-size: 20px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .japanese-touch {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #FF0000;
+            font-size: 24px;
+            text-shadow: 2px 2px #000;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="office" id="office"&gt;
+        &lt;div class="watercooler"&gt;&lt;/div&gt;
+        &lt;div class="japanese-touch"&gt;オフィス&lt;/div&gt; &lt;!-- Japanese for Office --&gt;
+    &lt;/div&gt;
+    &lt;div id="status"&gt;Active Sessions: Loading...&lt;/div&gt;
+    &lt;script&gt;
+        const workerSheets = [
+            'sprites/WorkerSheetBrownPurple.png',
+            'sprites/WorkerSheetBrownWhite.png',
+            'sprites/WorkerSheetYellowPurple.png',
+            'sprites/WorkerSheetYellowWhite.png'
+        ];
+
+        function getSessions() {
+            // Simulate API fetch. For real integration:
+            // Use a backend server (e.g., Node.js/Flask) that runs `exec('openclaw sessions list')` periodically,
+            // parses the output to count sessions with age &lt; 5min as active/busy, older as idle.
+            // Serve data via /api/sessions endpoint.
+            // Here, mock based on recent exec: 28 sessions, say 20 active.
+            const numActive = Math.floor(Math.random() * 10) + 15; // 15-25 active
+            const sessions = [];
+            for (let i = 0; i &lt; numActive; i++) {
+                sessions.push({ id: i, status: Math.random() &gt; 0.3 ? 'busy' : 'idle' }); // 70% busy
+            }
+            return sessions;
+        }
+
+        function updateDashboard() {
+            const office = document.getElementById('office');
+            const sessions = getSessions();
+            const numDesks = Math.min(Math.max(sessions.length, 4), 6); // Scale to 4-6
+            // Remove old desks
+            const oldDesks = office.querySelectorAll('.desk');
+            oldDesks.forEach(d =&gt; d.remove());
+
+            for (let i = 0; i &lt; numDesks; i++) {
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                const computer = document.createElement('div');
+                computer.className = 'computer';
+                desk.appendChild(computer);
+
+                const workerDiv = document.createElement('div');
+                workerDiv.className = 'worker';
+                const sheetIndex = i % workerSheets.length;
+                workerDiv.style.backgroundImage = `url(${workerSheets[sheetIndex]})`;
+                workerDiv.style.backgroundPosition = sessions[i] ? (sessions[i].status === 'busy' ? '0 -64px' : '0 0') : '0 0'; // Assume frames
+
+                const session = sessions[i] || { status: 'idle' };
+                if (session.status === 'busy') {
+                    desk.classList.add('busy');
+                } else {
+                    desk.classList.add('idle');
+                    const zzz = document.createElement('div');
+                    zzz.className = 'zzz';
+                    zzz.textContent = 'ZZZ';
+                    desk.appendChild(zzz);
+                }
+                desk.appendChild(workerDiv);
+                office.appendChild(desk);
+            }
+
+            document.getElementById('status').textContent = `Active Sessions: ${sessions.length} | Desks: ${numDesks}`;
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 5000); // Update every 5s
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

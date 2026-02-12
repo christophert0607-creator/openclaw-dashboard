@@ -1,0 +1,1 @@
+# OpenClaw Custom Dashboard\n\nA custom dashboard for managing OpenClaw agents, tools, and workspaces.\n\n## Development\n\n- Frontend: React\n- Backend: Node.js\n- Integration: OpenClaw API

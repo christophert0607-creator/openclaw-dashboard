@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improved 8-Bit Japanese Office Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%); /* sky to floor */
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+        }
+        .office {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            background-color: #F5F5DC; /* beige walls */
+            padding: 30px;
+            border: 4px solid #654321; /* wooden frame */
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .office::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: repeating-linear-gradient(90deg, #FFF 0px, #FFF 2px, #654321 2px, #654321 4px); /* ceiling lines */
+        }
+        .desk {
+            width: 160px;
+            height: 140px;
+            background: linear-gradient(to bottom, #D2B48C 0%, #8B4513 100%); /* wood desk */
+            margin: 15px;
+            position: relative;
+            border: 2px solid #000;
+            border-radius: 0; /* pixel sharp */
+        }
+        .worker {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 32px;
+            height: 48px; /* taller for standing */
+            background-image: url('sprites/WorkerSheetYellowWhite.png');
+            background-size: 128px 48px; /* 4 frames */
+            background-repeat: no-repeat;
+            animation: idle 2s steps(1) infinite;
+        }
+        .idle .worker {
+            background-position: 0 0; /* idle frame */
+            animation: none;
+        }
+        .busy .worker {
+            animation: typing 0.5s steps(1) infinite;
+        }
+        @keyframes typing {
+            0% { background-position: 0 0; }
+            25% { background-position: -32px 0; }
+            50% { background-position: -64px 0; }
+            75% { background-position: -96px 0; }
+            100% { background-position: 0 0; }
+        }
+        .idle .worker::after {
+            content: '💤 ZZZ';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #333;
+            animation: float 3s ease-in-out infinite;
+            font-family: monospace;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateX(-50%) translateY(-10px) rotate(5deg); opacity: 1; }
+        }
+        .session-info {
+            position: absolute;
+            top: 10px;
+            left: 5px;
+            right: 5px;
+            font-size: 9px;
+            text-align: center;
+            color: #000;
+            background: rgba(255,255,255,0.8);
+            padding: 2px;
+            border: 1px solid #000;
+        }
+        .computer {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 18px;
+            background-color: #333;
+            border: 1px solid #000;
+        }
+        .computer::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background-color: #00f; /* screen */
+        }
+        .busy .computer::before {
+            animation: blink 1s infinite;
+            background-color: #0f0; /* green for busy */
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .tea {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            width: 8px;
+            height: 12px;
+            background-color: #8B0000;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏢 Improved 8-Bit Japanese Office Dashboard</h1>
+    <p style="text-align: center; color: #666;">Monitoring OpenClaw Sessions in Retro Style</p>
+    <div id="office" class="office"></div>
+
+    <script>
+        async function fetchSessions() {
+            try {
+                const response = await fetch('http://localhost:8000/api/sessions');
+                if (!response.ok) throw new Error('Server error');
+                return await response.json();
+            } catch (e) {
+                console.log('Using mock data:', e);
+                // Simulate with real-like data
+                return [
+                    {kind: 'agent', key: 'main:main', age: 'just now', model: 'grok-4-fast'},
+                    {kind: 'subagent', key: 'office-redo:a34f5ca4', age: '2m ago', model: 'grok-4-fast'},
+                    {kind: 'session', key: 'telegram:chat', age: 'just now', model: 'grok-4-fast'},
+                    {kind: 'subagent', key: 'task1:123', age: 'idle 5m', model: 'grok-4-fast'},
+                    {kind: 'agent', key: 'backup', age: 'idle 10m', model: 'grok-4-fast'}
+                ];
+            }
+        }
+
+        function updateDashboard(sessions) {
+            const office = document.getElementById('office');
+            office.innerHTML = '';
+            const numDesks = Math.min(6, Math.max(4, sessions.length)); // 4-6 desks
+            // Fill with active, then idle
+            let activeSessions = sessions.filter(s => s.age.includes('just now') || !s.age.includes('idle'));
+            let idleSessions = sessions.filter(s => s.age.includes('idle'));
+            let all = [...activeSessions, ...idleSessions.slice(0, numDesks - activeSessions.length)];
+            for (let i = 0; i < numDesks; i++) {
+                const session = all[i] || {kind: 'empty', key: 'Desk ' + (i+1), age: 'idle', model: 'none'};
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                const isBusy = !session.age.includes('idle') && session.key !== 'empty';
+                const statusClass = isBusy ? 'busy' : 'idle';
+                desk.classList.add(statusClass);
+
+                const info = document.createElement('div');
+                info.className = 'session-info';
+                let displayKey = session.key.length > 15 ? session.key.substring(0,12) + '...' : session.key;
+                info.innerHTML = `<strong>${displayKey}</strong><br>${session.age}<br>${session.model || 'N/A'}`;
+
+                const computer = document.createElement('div');
+                computer.className = 'computer';
+
+                const worker = document.createElement('div');
+                worker.className = 'worker';
+
+                const tea = document.createElement('div');
+                tea.className = 'tea'; // Japanese touch
+
+                desk.appendChild(info);
+                desk.appendChild(computer);
+                desk.appendChild(worker);
+                desk.appendChild(tea);
+                office.appendChild(desk);
+            }
+        }
+
+        async function init() {
+            let sessions = await fetchSessions();
+            updateDashboard(sessions);
+            setInterval(async () => {
+                sessions = await fetchSessions();
+                updateDashboard(sessions);
+            }, 30000); // Update every 30s for real fetch
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+#dashboard {
+    display: flex;
+    align-items: flex-start;
+    padding: 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+#left-panel {
+    width: 250px;
+    padding: 15px;
+    background: #e0e0e0;
+    margin-right: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#center-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 0 15px;
+}
+
+#office-canvas {
+    border: 2px solid #333;
+    background-color: #f8f8f8;
+    image-rendering: pixelated;
+    border-radius: 4px;
+}
+
+#right-panel {
+    width: 250px;
+    padding: 15px;
+    background: #f0f0f0;
+    margin-left: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+button {
+    margin: 8px 0;
+    padding: 8px 12px;
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background: #fff;
+}
+
+button:hover {
+    background: #f0f0f0;
+}
+
+#hire-btn, #new-project-btn {
+    width: 100%;
+    font-size: 16px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.busy {
+    background-color: #FF6B6B;
+}
+
+.idle {
+    background-color: #4ECDC4;
+}
+
+h2, h3 {
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+#employees-list div, #projects-list div {
+    margin: 10px 0;
+    padding: 8px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
+}
+
+.project-item {
+    margin: 10px 0;
+}
+
+.project-progress {
+    width: 100%;
+    height: 20px;
+    background: #ddd;
+    border: 1px solid #bbb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 5px 0;
+}
+
+.project-fill {
+    height: 100%;
+    background: linear-gradient(to right, #4CAF50, #45a049);
+    transition: width 0.5s ease-in-out;
+    border-radius: 10px;
+}
+
+.assigned-employees {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+#events-log p {
+    margin: 5px 0;
+    padding: 5px;
+    background: rgba(0,0,0,0.05);
+    border-left: 3px solid #4ECDC4;
+    font-size: 12px;
+}

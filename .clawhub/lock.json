@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "stock-analysis": {
+      "version": "6.2.0",
+      "installedAt": 1770304049661
+    },
+    "rememberall": {
+      "version": "1.1.0",
+      "installedAt": 1770304326095
+    },
+    "todo": {
+      "version": "1.1.0",
+      "installedAt": 1770304327773
+    },
+    "nano-pdf": {
+      "version": "1.0.0",
+      "installedAt": 1770304329478
+    },
+    "youtube-watcher": {
+      "version": "1.0.0",
+      "installedAt": 1770304330835
+    },
+    "newsletter-digest": {
+      "version": "1.0.0",
+      "installedAt": 1770304332347
+    }
+  }
+}

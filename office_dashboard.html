@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Bit Office Dashboard</title>
+    <style>
+        body {
+            background-color: #87CEEB; /* Sky blue for office */
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            image-rendering: pixelated; /* For 8-bit look */
+        }
+        .office {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .desk {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 20px;
+            background-color: #8B4513; /* Brown desk */
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .worker {
+            position: absolute;
+            bottom: 20px;
+            width: 16px;
+            height: 16px;
+            background-image: url('WorkerSheetBrownWhite.png');
+            background-size: 64px 160px;
+            background-repeat: no-repeat;
+            /* Default idle pose, assume first frame */
+            background-position: 0px 0px;
+        }
+        .typing .worker {
+            animation: type 1s steps(4) infinite;
+        }
+        @keyframes type {
+            0% { background-position: 0px -64px; } /* Assume typing row at y=64px, 4 frames */
+            25% { background-position: -16px -64px; }
+            50% { background-position: -32px -64px; }
+            75% { background-position: -48px -64px; }
+            100% { background-position: 0px -64px; }
+        }
+        .idle .worker {
+            background-position: 0px 0px; /* Idle */
+        }
+        .zzz {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #000;
+            animation: float 2s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍣 8-Bit Japanese Office Dashboard 🍣</h1>
+    <div id="office" class="office"></div>
+    <div id="status" class="status">Active Sessions: <span id="active-count">4</span></div>
+
+    <script>
+        const spriteSheet = 'WorkerSheetBrownWhite.png';
+        let numDesks = 4;
+
+        function createDesk(id, isBusy) {
+            const desk = document.createElement('div');
+            desk.className = 'desk';
+            desk.id = `desk-${id}`;
+
+            const worker = document.createElement('div');
+            worker.className = 'worker';
+            if (isBusy) {
+                desk.classList.add('typing');
+            } else {
+                desk.classList.add('idle');
+                const zzz = document.createElement('div');
+                zzz.className = 'zzz';
+                zzz.textContent = 'ZZZ';
+                desk.appendChild(zzz);
+            }
+            desk.appendChild(worker);
+
+            return desk;
+        }
+
+        function updateOffice() {
+            const office = document.getElementById('office');
+            office.innerHTML = '';
+            const activeSpan = document.getElementById('active-count');
+
+            fetch('http://localhost:5000/sessions.json')
+                .then(response => response.json())
+                .then(data => {
+                    numDesks = Math.max(4, Math.min(6, data.active || 4));
+                    activeSpan.textContent = numDesks;
+                    for (let i = 0; i < numDesks; i++) {
+                        const isBusy = Math.random() > 0.5; // Random for demo
+                        office.appendChild(createDesk(i, isBusy));
+                    }
+                })
+                .catch(() => {
+                    // Fallback simulate
+                    numDesks = 4;
+                    activeSpan.textContent = numDesks;
+                    for (let i = 0; i < numDesks; i++) {
+                        const isBusy = Math.random() > 0.5;
+                        office.appendChild(createDesk(i, isBusy));
+                    }
+                });
+        }
+
+        // Initial load
+        updateOffice();
+
+        // Update every 30 seconds
+        setInterval(updateOffice, 30000);
+    </script>
+</body>
+</html>

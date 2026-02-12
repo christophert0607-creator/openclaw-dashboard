@@ -1,0 +1,199 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;OpenClaw 8-Bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body { 
+            margin: 0; 
+            background: #000; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: monospace;
+            color: #fff;
+        }
+        canvas { 
+            image-rendering: pixelated; 
+            border: 2px solid #fff; 
+            background: #000;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid #fff;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id=&quot;info&quot;&gt;
+        &lt;p&gt;Active Sessions: &lt;span id=&quot;sessionCount&quot;&gt;0&lt;/span&gt;&lt;/p&gt;
+        &lt;p&gt;Last Update: &lt;span id=&quot;lastUpdate&quot;&gt;&lt;/span&gt;&lt;/p&gt;
+        &lt;button onclick=&quot;updateDashboard()&quot;&gt;Refresh&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;canvas id=&quot;dashboard&quot; width=&quot;640&quot; height=&quot;480&quot;&gt;&lt;/canvas&gt;
+    &lt;script&gt;
+        const canvas = document.getElementById('dashboard');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        // Load sprites
+        const salarymanImg = new Image();
+        salarymanImg.src = 'WorkerSheetBrownWhite.png'; // Assuming brown white for salaryman
+        const olImg = new Image();
+        olImg.src = 'WorkerSheetYellowWhite.png'; // Yellow white for OL
+        const computerImg = new Image();
+        computerImg.src = 'ComputerSheet.png';
+
+        let imagesLoaded = 0;
+        const totalImages = 3;
+        function imageLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                updateDashboard();
+                setInterval(updateDashboard, 30000); // Update every 30s
+            }
+        }
+        salarymanImg.onload = imageLoaded;
+        olImg.onload = imageLoaded;
+        computerImg.onload = imageLoaded;
+
+        // Animation frames
+        let animationFrame = 0;
+
+        // Desk positions (6 desks)
+        const desks = [
+            {x: 50, y: 300},
+            {x: 150, y: 300},
+            {x: 250, y: 300},
+            {x: 350, y: 300},
+            {x: 450, y: 300},
+            {x: 550, y: 300}
+        ];
+
+        // Simulate sessions (in real, fetch via API: parse 'openclaw sessions list' for subagent count)
+        function getSessions() {
+            // Simulate 0-6 active sessions
+            const numActive = Math.floor(Math.random() * 7);
+            const sessions = [];
+            for (let i = 0; i &lt; numActive; i++) {
+                sessions.push({
+                    id: i,
+                    isBusy: Math.random() &gt; 0.3, // 70% busy
+                    gender: i % 2 === 0 ? 'male' : 'female' // Alternate
+                });
+            }
+            return sessions;
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Sky blue wall
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, 640, 200);
+
+            // Office floor tiles (gray)
+            ctx.fillStyle = '#A9A9A9';
+            for (let x = 0; x &lt; 640; x += 20) {
+                for (let y = 200; y &lt; 480; y += 20) {
+                    ctx.fillRect(x, y, 20, 20);
+                }
+            }
+
+            // Water cooler at right
+            if (computerImg.complete) { // Placeholder, actually use watercooler if loaded
+                // Simple rect for now
+                ctx.fillStyle = '#C0C0C0';
+                ctx.fillRect(600, 250, 30, 50);
+            }
+        }
+
+        // Draw desk and computer
+        function drawDesk(desk, i) {
+            const {x, y} = desk;
+            // Desk top brown
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x, y, 80, 20);
+
+            // Desk legs
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x, y+20, 10, 40);
+            ctx.fillRect(x+70, y+20, 10, 40);
+
+            // Computer
+            if (computerImg.complete) {
+                // Assume computer sheet has frames, draw one: say sx=0, sy=0, 16x16 scaled to 32x32
+                ctx.drawImage(computerImg, 0, 0, 16, 16, x+20, y-20, 32, 32);
+            } else {
+                // Fallback rect
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(x+20, y-20, 32, 16); // screen
+                ctx.fillRect(x+20, y-4, 32, 4); // base
+            }
+        }
+
+        // Draw worker sprite (16x16 frame, scaled to 32x32)
+        function drawWorker(x, y, isBusy, gender, animFrame) {
+            let img = gender === 'male' ? salarymanImg : olImg;
+            if (!img.complete) return;
+
+            let sx, sy;
+            if (isBusy) {
+                // Typing animation: assume row 1 (sy=16), frames 0-2
+                sy = 16;
+                sx = (animFrame % 3) * 16;
+            } else {
+                // Idle sitting: assume row 0, frame 0
+                sy = 0;
+                sx = 0;
+                // Add ZZZ floating
+                drawZZZ(x + 16, y - 10 + Math.sin(animFrame * 0.2) * 5, animFrame);
+            }
+            // Assume sprite height 32px (two 16x16 stacked? or single 16x16, adjust
+            // For simplicity, draw 16x16 at position above desk
+            ctx.drawImage(img, sx, sy, 16, 16, x + 20, y - 40, 32, 32);
+        }
+
+        // Draw floating ZZZ
+        function drawZZZ(x, y, frame) {
+            ctx.fillStyle = '#000';
+            ctx.font = '16px monospace';
+            ctx.fillText('Z', x, y);
+            ctx.fillText('Z', x + 10, y + Math.sin(frame * 0.1) * 3);
+            ctx.fillText('Z', x + 20, y + Math.sin(frame * 0.15) * 4);
+        }
+
+        // Main update
+        function updateDashboard() {
+            ctx.clearRect(0, 0, 640, 480);
+            animationFrame++;
+
+            drawBackground();
+
+            const sessions = getSessions();
+            document.getElementById('sessionCount').textContent = sessions.length;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+            // Draw all 6 desks
+            desks.forEach((desk, i) =&gt; {
+                drawDesk(desk, i);
+                // If i &lt; sessions.length, draw worker
+                if (i &lt; sessions.length) {
+                    const session = sessions[i];
+                    drawWorker(desk.x, desk.y, session.isBusy, session.gender, animationFrame);
+                }
+                // Else empty desk
+            });
+
+            // If more sessions than desks, note overflow or something, but cap at 6
+        }
+
+        // Initial load wait for images
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

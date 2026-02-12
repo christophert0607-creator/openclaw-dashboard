@@ -1,0 +1,229 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Enhanced 8-Bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+            text-shadow: 2px 2px #fff;
+            font-size: 24px;
+        }
+        .office {
+            position: relative;
+            width: 1000px;
+            height: 400px;
+            margin: 0 auto;
+            background-color: #90EE90; /* Green floor */
+            border: 4px solid #000;
+            overflow: hidden;
+        }
+        .wall {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background-color: #D2B48C; /* Beige wall */
+            border-bottom: 2px solid #000;
+        }
+        .desk {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            background: #8B4513;
+            bottom: 50px;
+            border: 2px solid #654321;
+        }
+        .computer {
+            position: absolute;
+            bottom: 10px;
+            left: 30px;
+            width: 32px;
+            height: 32px;
+            background-image: url('sprites/ComputerSheet.png');
+            background-size: 32px 32px;
+            background-repeat: no-repeat;
+        }
+        .worker {
+            position: absolute;
+            bottom: 90px;
+            left: 40px;
+            width: 32px;
+            height: 48px; /* Assuming taller sprite */
+            background-size: 128px 48px; /* Sheet size for 4 frames? */
+            background-repeat: no-repeat;
+            transition: background-position 0.3s;
+        }
+        .busy .worker {
+            background-position: -32px 0; /* Typing frame */
+            animation: keypress 0.5s infinite;
+        }
+        .idle .worker {
+            background-position: 0 0; /* Idle frame */
+            animation: breathe 2s infinite ease-in-out;
+        }
+        @keyframes keypress {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-1px); }
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.02); }
+        }
+        .zzz {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #888;
+            animation: zzzFloat 3s infinite;
+            font-family: monospace;
+        }
+        @keyframes zzzFloat {
+            0%, 100% { transform: translateX(-50%) translateY(0) opacity: 0.8; }
+            50% { transform: translateX(-50%) translateY(-8px) opacity: 1; }
+        }
+        .session-info {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            font-size: 8px;
+            text-align: center;
+            color: #000;
+            background: rgba(255,255,255,0.7);
+            padding: 2px;
+            border-radius: 2px;
+        }
+        .watercooler {
+            position: absolute;
+            bottom: 0;
+            right: 20px;
+            width: 32px;
+            height: 64px;
+            background-image: url('sprites/WatercoolerSheet.png');
+            background-size: 32px 64px;
+        }
+        /* Desk positions for 4-6 */
+        .desk-1 { left: 100px; }
+        .desk-2 { left: 250px; }
+        .desk-3 { left: 400px; }
+        .desk-4 { left: 550px; }
+        .desk-5 { left: 700px; }
+        .desk-6 { left: 850px; }
+        .office-sign {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            color: #FF4500;
+            text-shadow: 1px 1px #000;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;🏢 Enhanced 8-Bit Japanese Office Visualization&lt;/h1&gt;
+    &lt;div class=&quot;office&quot; id=&quot;office&quot;&gt;
+        &lt;div class=&quot;wall&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;watercooler&quot;&gt;&lt;/div&gt;
+        &lt;div class=&quot;office-sign&quot;&gt;オフィス&lt;/div&gt;
+    &lt;/div&gt;
+
+    &lt;script&gt;
+        const workerSheets = [
+            {url: 'sprites/WorkerSheetBrownPurple.png', frames: {idle: '0 0', busy: '-32px 0'}},
+            {url: 'sprites/WorkerSheetBrownWhite.png', frames: {idle: '0 0', busy: '-32px 0'}},
+            {url: 'sprites/WorkerSheetYellowPurple.png', frames: {idle: '0 0', busy: '-32px 0'}},
+            {url: 'sprites/WorkerSheetYellowWhite.png', frames: {idle: '0 0', busy: '-32px 0'}}
+        ];
+
+        async function fetchSessions() {
+            try {
+                const response = await fetch('http://localhost:8000/api/sessions');
+                if (!response.ok) throw new Error('API error');
+                return await response.json();
+            } catch (e) {
+                console.log('Using mock data:', e);
+                return [
+                    {key: 'agent:main:main', age: 'just now', model: 'grok-4-fast'},
+                    {key: 'subagent:office', age: '2m ago', model: 'grok-4-fast'},
+                    {key: 'subagent:task1', age: 'just now', model: 'grok-4-fast'},
+                    {key: 'subagent:task2', age: '10m ago', model: 'grok-4-fast'},
+                    {key: 'telegram:chat', age: '1m ago', model: 'grok-4-fast'},
+                    {key: 'background:heartbeat', age: '5m ago', model: 'grok-4-fast'}
+                ];
+            }
+        }
+
+        function updateDashboard(sessions) {
+            const office = document.getElementById('office');
+            // Clear existing desks
+            const existingDesks = office.querySelectorAll('.desk');
+            existingDesks.forEach(desk =&gt; desk.remove());
+
+            // Determine active count for scaling
+            const activeSessions = sessions.filter(s =&gt; s.age === 'just now' || s.age.includes('m') &amp;&amp; parseInt(s.age) &lt; 5).length;
+            const numDesks = Math.min(6, Math.max(4, activeSessions || sessions.length));
+
+            for (let i = 0; i &lt; numDesks; i++) {
+                const session = sessions[i] || {age: 'idle', key: 'idle', model: ''};
+                const isBusy = session.age === 'just now';
+                const statusClass = isBusy ? 'busy' : 'idle';
+
+                const desk = document.createElement('div');
+                desk.className = `desk ${statusClass} desk-${i+1}`;
+
+                const info = document.createElement('div');
+                info.className = 'session-info';
+                info.innerHTML = `&lt;strong&gt;${session.key.slice(0,15)}...&lt;/strong&gt;&lt;br&gt;${session.age}&lt;br&gt;${session.model}`;
+
+                const computer = document.createElement('div');
+                computer.className = 'computer';
+
+                const workerDiv = document.createElement('div');
+                workerDiv.className = 'worker';
+                const sheet = workerSheets[i % workerSheets.length];
+                workerDiv.style.backgroundImage = `url('${sheet.url}')`;
+                workerDiv.style.backgroundPosition = isBusy ? sheet.frames.busy : sheet.frames.idle;
+
+                if (!isBusy) {
+                    const zzz = document.createElement('div');
+                    zzz.className = 'zzz';
+                    zzz.textContent = 'ZZZ';
+                    desk.appendChild(zzz);
+                }
+
+                desk.appendChild(info);
+                desk.appendChild(computer);
+                desk.appendChild(workerDiv);
+                office.appendChild(desk);
+            }
+
+            // Update title or status
+            document.querySelector('h1').textContent = `🏢 8-Bit Japanese Office | Active: ${activeSessions} | Total: ${sessions.length}`;
+        }
+
+        async function init() {
+            let sessions = await fetchSessions();
+            updateDashboard(sessions);
+            setInterval(async () =&gt; {
+                sessions = await fetchSessions();
+                updateDashboard(sessions);
+            }, 10000);
+        }
+
+        init();
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

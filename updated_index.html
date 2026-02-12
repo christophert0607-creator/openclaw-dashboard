@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixel Art Game Dev Dashboard</title>
+    <style>
+        body { 
+            background: #87CEEB; 
+            font-family: monospace; 
+            margin: 0;
+            padding: 20px;
+        }
+        #officeCanvas { 
+            image-rendering: pixelated; 
+            border: 2px solid #000; 
+            display: block; 
+            margin: 0 auto 20px;
+            background: #90EE90; /* green floor */
+        }
+        #projects { 
+            text-align: center; 
+            font-size: 18px; 
+        }
+        #controls { 
+            text-align: center; 
+            margin: 20px 0; 
+        }
+        button { 
+            font-family: monospace; 
+            padding: 10px 20px; 
+            margin: 0 10px; 
+            background: #FFD700; 
+            border: 2px solid #000; 
+            cursor: pointer; 
+        }
+        h1 { text-align: center; color: #000; font-size: 24px; }
+        .project { margin: 10px; padding: 10px; background: #FFF; border: 1px solid #000; display: inline-block; width: 200px; }
+        .progress { background: #DDD; height: 20px; border: 1px solid #000; }
+        .progress-bar { background: #4CAF50; height: 100%; }
+    </style>
+</head>
+<body>
+    <h1>🖥️ Pixel Art Game Dev Office - Kairosoft Style</h1>
+    <canvas id="officeCanvas" width="800" height="500"></canvas>
+    <div id="controls">
+        <button onclick="hireEmployee()">Hire Dev</button>
+        <button onclick="updateDashboard()">Refresh</button>
+    </div>
+    <div id="projects"></div>
+    <script>
+        const canvas = document.getElementById('officeCanvas');
+        const ctx = canvas.getContext('2d');
+        let employees = [];
+        let projects = [];
+        let workerImg, bossImg;
+        let animationFrames = {};
+        let frameTime = 0;
+
+        // Load sprites
+        workerImg = new Image();
+        workerImg.src = 'sprites/WorkerSheetYellowWhite.png';
+        bossImg = new Image();
+        bossImg.src = 'sprites/WorkerSheetBrownPurple.png';
+
+        // Assume spritesheet layout: 16x16 frames, horizontal for actions
+        // Idle: frame 0 (sx=0)
+        // Walking: frames 1-4 (sx=16,32,48,64), row 0
+        // Working/Typing: frames 0-3 row 1 (sx=0-48, sy=16)
+        function getSpriteFrame(emp) {
+            const frameWidth = 16;
+            const frameHeight = 16;
+            let sx = 0, sy = 0;
+            let animFrame = 0;
+
+            if (emp.animation === 'walking') {
+                animFrame = Math.floor((Date.now() / 200) % 4); // 200ms per frame
+                sx = animFrame * frameWidth;
+                sy = 0;
+            } else if (emp.animation === 'working') {
+                animFrame = Math.floor((Date.now() / 500) % 4); // Slower for typing
+                sx = animFrame * frameWidth;
+                sy = frameHeight; // Second row
+            } else { // idle
+                sx = 0;
+                sy = 0;
+            }
+
+            return {sx, sy, sw: frameWidth, sh: frameHeight};
+        }
+
+        function drawOffice() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw desks (6 desks)
+            for (let i = 0; i < 6; i++) {
+                let dx = 50 + i * 120;
+                let dy = 300;
+                // Desk
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(dx, dy, 64, 32);
+                ctx.fillRect(dx, dy + 32, 64, 32); // Legs?
+                // Computer
+                ctx.fillStyle = '#333';
+                ctx.fillRect(dx + 10, dy + 5, 20, 15);
+                ctx.fillStyle = '#00BFFF';
+                ctx.fillRect(dx + 12, dy + 7, 16, 10); // Screen
+            }
+
+            // Draw CEO/Boss
+            if (employees[0] && employees[0].type === 'boss') {
+                const frame = getSpriteFrame(employees[0]);
+                const scale = 2;
+                ctx.drawImage(bossImg, frame.sx, frame.sy, frame.sw, frame.sh, 
+                              employees[0].position.x, employees[0].position.y, 
+                              frame.sw * scale, frame.sh * scale);
+            }
+
+            // Draw employees
+            employees.slice(1).forEach(emp => {
+                if (emp.type === 'worker' && workerImg.complete) {
+                    const frame = getSpriteFrame(emp);
+                    const scale = 2;
+                    ctx.drawImage(workerImg, frame.sx, frame.sy, frame.sw, frame.sh, 
+                                  emp.position.x, emp.position.y, 
+                                  frame.sw * scale, frame.sh * scale);
+                }
+            });
+
+            // Draw project areas (simple rectangles)
+            let px = 50;
+            projects.forEach(proj => {
+                ctx.fillStyle = '#FFEB3B';
+                ctx.fillRect(px, 400, 100, 50);
+                ctx.fillStyle = '#000';
+                ctx.font = '12px monospace';
+                ctx.fillText(proj.name.substring(0,10), px + 5, 415);
+                // Progress
+                const barWidth = (proj.progress / 100) * 80;
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(px + 10, 425, barWidth, 10);
+                px += 130;
+            });
+        }
+
+        function updateProjects() {
+            const projDiv = document.getElementById('projects');
+            projDiv.innerHTML = projects.map(p => 
+                `<div class="project">
+                    <div>${p.name}</div>
+                    <div class="progress"><div class="progress-bar" style="width: ${p.progress}%"></div></div>
+                    <div>${p.progress}%</div>
+                    ${p.assigned.map(id => employees.find(e => e.id === id)?.name || id).join(', ')}
+                </div>`
+            ).join('');
+        }
+
+        function updateDashboard() {
+            Promise.all([
+                fetch('/api/employees').then(r => r.json()).then(data => employees = data),
+                fetch('/api/projects').then(r => r.json()).then(data => projects = data)
+            ]).then(() => {
+                drawOffice();
+                updateProjects();
+            }).catch(err => console.error(err));
+        }
+
+        function hireEmployee() {
+            fetch('/api/hire', {method: 'POST', headers: {'Content-Type': 'application/json'}})
+                .then(r => r.json())
+                .then(() => updateDashboard());
+        }
+
+        // For assign, would need select UI, but simple hire for now
+        // To add: list employees and projects, buttons to assign
+
+        // Initial load
+        workerImg.onload = bossImg.onload = () => {
+            updateDashboard();
+            setInterval(updateDashboard, 5000); // Update every 5s
+            setInterval(drawOffice, 100); // Animate every 100ms
+        };
+
+        if (workerImg.complete && bossImg.complete) {
+            updateDashboard();
+        }
+    </script>
+</body>
+</html>

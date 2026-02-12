@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairosoft風格遊戲開發儀表板</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="office-canvas" width="600" height="480"></canvas>
+        <div id="stats-panel">
+            <h2>統計</h2>
+            <div id="employees-list"></div>
+            <div id="projects-list"></div>
+            <button id="hire-btn" title="雇用新員工">➕ 雇用員工</button>
+        </div>
+        <div id="events-panel">
+            <h3>事件</h3>
+            <div id="events-log"></div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+</body>
+</html>

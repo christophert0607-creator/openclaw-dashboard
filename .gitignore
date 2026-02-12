@@ -1,0 +1,25 @@
+# Sensitive files
+*.json containing secrets
+client_secret.json
+auth-profiles.json
+models.json
+*.pem
+*.key
+*.env
+moltbook_credentials.json
+
+# Logs
+*.log
+__pycache__/
+*.pyc
+
+# Temp
+temp/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

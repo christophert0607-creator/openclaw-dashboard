@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenClaw 遊戲開發儀表板</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 600px;
+            height: 480px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
+            font-family: 'Courier New', monospace;
+            image-rendering: pixelated;
+            overflow: hidden;
+            position: relative;
+        }
+        #office {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .desk {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            background: #8B4513;
+            border: 2px solid #000;
+            bottom: 100px;
+        }
+        .computer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 32px;
+            height: 32px;
+            background: #333;
+            border: 1px solid #000;
+        }
+        .employee {
+            position: absolute;
+            bottom: 164px; /* above desk */
+            width: 32px;
+            height: 48px;
+            background: #FFD700; /* yellow pixel person */
+            border: 1px solid #000;
+            transition: left 1s ease, bottom 1s ease;
+        }
+        .employee.busy {
+            background: #FF6B6B; /* red for busy */
+            animation: working 0.5s steps(2) infinite;
+        }
+        .employee.idle {
+            background: #4ECDC4;
+            animation: idle-wander 3s ease-in-out infinite alternate;
+        }
+        @keyframes working {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(1.1); }
+        }
+        @keyframes idle-wander {
+            0% { left: 0px; }
+            100% { left: 20px; }
+        }
+        #ceo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 48px;
+            height: 64px;
+            background: #8B0000; /* boss red */
+            border: 2px solid #000;
+        }
+        #projects {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 150px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 10px;
+            font-size: 12px;
+        }
+        .project {
+            margin: 5px 0;
+        }
+        .progress-bar {
+            width: 100px;
+            height: 10px;
+            background: #333;
+            border: 1px solid #000;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.5s;
+        }
+        h1 {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #000;
+            font-size: 18px;
+            margin: 5px 0;
+            text-shadow: 1px 1px 0 #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenClaw 遊戲開發公司</h1>
+    <div id="office">
+        <div id="ceo" class="employee"></div>
+        <!-- Desks will be positioned in JS -->
+    </div>
+    <div id="projects"></div>
+    <script>
+        let employees = [];
+        let projects = [];
+        let ceoStatus = 'idle';
+        
+        // Position desks
+        function createDesks(num) {
+            const office = document.getElementById('office');
+            for (let i = 0; i < num; i++) {
+                const desk = document.createElement('div');
+                desk.className = 'desk';
+                desk.style.left = (100 + i * 80) + 'px';
+                desk.style.bottom = '100px';
+                const computer = document.createElement('div');
+                computer.className = 'computer';
+                desk.appendChild(computer);
+                office.appendChild(desk);
+            }
+        }
+        
+        function updateEmployees() {
+            fetch('/api/dashboard')
+                .then(r => r.json())
+                .then(data => {
+                    ceoStatus = data.ceo.status;
+                    document.getElementById('ceo').className = 'employee ' + (ceoStatus === 'busy' ? 'busy' : 'idle');
+                    
+                    // Update employees
+                    const oldEmps = document.querySelectorAll('.employee:not(#ceo)');
+                    oldEmps.forEach(e => e.remove());
+                    
+                    employees = data.employees;
+                    employees.forEach(emp => {
+                        const e = document.createElement('div');
+                        e.className = 'employee ' + emp.status;
+                        e.style.left = emp.position.x + 'px';
+                        e.style.bottom = emp.position.y + 'px';
+                        if (emp.status === 'busy') {
+                            // Position at desk
+                            e.style.left = (100 + Math.floor(Math.random() * 4) * 80) + 'px';
+                            e.style.bottom = '164px';
+                        } else {
+                            // Wander
+                            e.style.left = Math.random() * 500 + 'px';
+                            e.style.bottom = Math.random() * 200 + 100 + 'px';
+                        }
+                        document.getElementById('office').appendChild(e);
+                    });
+                    
+                    // Update projects
+                    projects = data.projects;
+                    const projDiv = document.getElementById('projects');
+                    projDiv.innerHTML = '<h3>項目</h3>';
+                    projects.forEach(proj => {
+                        const p = document.createElement('div');
+                        p.className = 'project';
+                        p.innerHTML = proj.name + ': <div class="progress-bar"><div class="progress-fill" style="width: ' + proj.progress + '%"></div></div> ' + Math.round(proj.progress) + '%';
+                        projDiv.appendChild(p);
+                    });
+                })
+                .catch(err => console.error('Update failed:', err));
+        }
+        
+        createDesks(6); // Create 6 desks
+        updateEmployees();
+        setInterval(updateEmployees, 10000); // Poll every 10s
+    </script>
+</body>
+</html>

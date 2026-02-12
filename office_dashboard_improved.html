@@ -1,0 +1,223 @@
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;OpenClaw 8-bit Japanese Office Dashboard&lt;/title&gt;
+    &lt;style&gt;
+        body { 
+            margin: 0; 
+            background: #000; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            font-family: monospace;
+        }
+        canvas { 
+            image-rendering: pixelated; 
+            border: 2px solid #fff; 
+            background: #000;
+        }
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 14px;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id=&quot;status&quot;&gt;Active Sessions: &lt;span id=&quot;activeCount&quot;&gt;0&lt;/span&gt;&lt;/div&gt;
+    &lt;canvas id=&quot;dashboard&quot; width=&quot;640&quot; height=&quot;480&quot;&gt;&lt;/canvas&gt;
+    &lt;script&gt;
+        const canvas = document.getElementById('dashboard');
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        // Load sprite sheet
+        const spriteImg = new Image();
+        spriteImg.src = 'rpg_16x16.png';
+        let spritesLoaded = false;
+        spriteImg.onload = () =&gt; {
+            spritesLoaded = true;
+            animate();
+        };
+
+        // Choose sprite positions from sheet (assuming row 0 for standing)
+        // Assume index 0: salaryman-like (e.g. merchant), index 1: OL-like (e.g. elf or something)
+        const SALARYMAN_SPRITE_X = 0 * 16; // first
+        const OL_SPRITE_X = 1 * 16; // second
+        const SPRITE_Y = 0;
+        const SPRITE_SIZE = 16;
+
+        // Animation frames for ZZZ
+        let zzzFrame = 0;
+        const zzzPositions = [
+            {x: 0, y: 0},
+            {x: -2, y: -2},
+            {x: -1, y: -4},
+            {x: 0, y: -6},
+            {x: 2, y: -8},
+            {x: 1, y: -10},
+            {x: 0, y: -12}
+        ];
+
+        // Simulate active sessions (in real, fetch from /api/sessions)
+        function getActiveSessions() {
+            // Simulate 0-6 active
+            return Math.floor(Math.random() * 7);
+            // For real: 
+            // fetch('http://localhost:8080/sessions').then(res =&gt; res.json()).then(data =&gt; data.active.length);
+        }
+
+        let activeSessions = getActiveSessions();
+
+        // Draw background - Japanese office
+        function drawBackground() {
+            // Floor - tatami like, but simple gray
+            ctx.fillStyle = '#A9A9A9';
+            ctx.fillRect(0, 360, 640, 120);
+
+            // Walls - light beige
+            ctx.fillStyle = '#F0E68C'; // khaki for paper walls
+            ctx.fillRect(0, 0, 640, 360);
+
+            // Windows - shoji style, but simple blue
+            for (let i = 0; i &lt; 6; i++) {
+                ctx.fillStyle = '#87CEEB';
+                ctx.fillRect(80 + i*80, 40, 60, 60);
+                // Frames
+                ctx.fillStyle = '#D2B48C';
+                ctx.fillRect(80 + i*80, 40, 60, 2);
+                ctx.fillRect(80 + i*80, 40, 2, 60);
+                ctx.fillRect(80 + i*80 + 58, 40, 2, 60);
+                ctx.fillRect(80 + i*80, 98, 60, 2);
+            }
+
+            // Partitions between desks
+            ctx.fillStyle = '#D2B48C';
+            for (let i = 1; i &lt; 6; i++) {
+                ctx.fillRect(100 + i*100, 200, 2, 160);
+            }
+
+            // Draw 6 desks
+            for (let i = 0; i &lt; 6; i++) {
+                const deskX = 40 + i * 100;
+                // Desk top
+                ctx.fillStyle = '#8B4513'; // wood
+                ctx.fillRect(deskX, 240, 80, 20);
+                // Legs
+                ctx.fillRect(deskX, 260, 10, 100);
+                ctx.fillRect(deskX + 70, 260, 10, 100);
+                // Computer
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(deskX + 10, 220, 30, 20); // screen
+                ctx.fillRect(deskX + 45, 225, 30, 10); // keyboard
+                // Typing animation: moving key
+                if (Math.floor(Date.now() / 500) % 2 === 0) {
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(deskX + 55, 227, 5, 3); // key down
+                }
+            }
+        }
+
+        // Draw agent at desk
+        function drawAgent(deskIndex, isBusy, animTime) {
+            const deskX = 40 + deskIndex * 100;
+            const agentY = 180;
+            const scale = 2; // upscale sprite to 32x32
+
+            if (!spritesLoaded) {
+                // Fallback pixel art
+                if (isBusy) {
+                    drawSalarymanBusy(deskX + 20, agentY);
+                } else {
+                    drawOLIdle(deskX + 20, agentY, animTime);
+                }
+                return;
+            }
+
+            // Use sprite
+            const spriteX = isBusy ? SALARYMAN_SPRITE_X : OL_SPRITE_X;
+            ctx.drawImage(spriteImg, spriteX, SPRITE_Y, SPRITE_SIZE, SPRITE_SIZE, 
+                          deskX + 25, agentY, SPRITE_SIZE * scale, SPRITE_SIZE * scale);
+
+            if (!isBusy) {
+                // Draw ZZZ floating
+                const zzz = zzzPositions[zzzFrame % zzzPositions.length];
+                ctx.fillStyle = '#000';
+                ctx.font = '12px monospace';
+                ctx.fillText('Z', deskX + 60 + zzz.x, agentY - 20 + zzz.y);
+                ctx.fillText('Z', deskX + 65 + zzz.x, agentY - 25 + zzz.y);
+                ctx.fillText('Z', deskX + 70 + zzz.x, agentY - 30 + zzz.y);
+            }
+        }
+
+        // Fallback draw functions from original
+        function drawSalarymanBusy(x, y) {
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x+8, y+8, 16, 24); // torso scaled
+            ctx.fillStyle = '#FFDAB9';
+            ctx.fillRect(x+10, y, 12, 12); // head
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x+10, y, 12, 4); // hair
+            // Arms
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x+4, y+16, 6, 8);
+            ctx.fillRect(x+26, y+16, 6, 8);
+            ctx.fillStyle = '#FFDAB9';
+            ctx.fillRect(x+2, y+22, 4, 4);
+            ctx.fillRect(x+28, y+22, 4, 4);
+            // Legs
+            ctx.fillStyle = '#000080';
+            ctx.fillRect(x+12, y+32, 6, 12);
+            ctx.fillRect(x+20, y+32, 6, 12);
+            // Tie
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(x+18, y+16, 4, 8);
+        }
+
+        function drawOLIdle(x, y, animTime) {
+            ctx.fillStyle = '#FFB6C1';
+            ctx.fillRect(x+8, y+8, 16, 16); // blouse
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(x+6, y+24, 20, 16); // skirt
+            ctx.fillStyle = '#FFDAB9';
+            ctx.fillRect(x+10, y, 12, 12); // head
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x+8, y, 16, 8); // hair
+            // Arms
+            ctx.fillStyle = '#FFB6C1';
+            ctx.fillRect(x+4, y+16, 6, 6);
+            ctx.fillRect(x+26, y+16, 6, 6);
+            // Legs
+            ctx.fillStyle = '#8B0000';
+            ctx.fillRect(x+12, y+40, 6, 12);
+            ctx.fillRect(x+20, y+40, 6, 12);
+        }
+
+        // Animate
+        function animate() {
+            ctx.clearRect(0, 0, 640, 480);
+            drawBackground();
+
+            activeSessions = getActiveSessions();
+            document.getElementById('activeCount').textContent = activeSessions;
+
+            const numDesks = 6;
+            for (let i = 0; i &lt; numDesks; i++) {
+                const isBusy = i &lt; activeSessions;
+                drawAgent(i, isBusy, Date.now());
+            }
+
+            zzzFrame++;
+            requestAnimationFrame(animate);
+        }
+
+        // Start after load
+        if (spritesLoaded) animate();
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;

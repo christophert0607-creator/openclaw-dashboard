@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kairosoft Upgraded Office Dashboard</title>
+    <style>
+        body {
+            background-color: #87CEEB;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            image-rendering: pixelated;
+        }
+        canvas {
+            border: 2px solid #000;
+            display: block;
+            margin: 20px auto;
+        }
+        h1 {
+            text-align: center;
+            color: #000;
+            font-size: 24px;
+        }
+        #status {
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍣 Kairosoft Dynamic Office Life 🍣</h1>
+    <canvas id="canvas" width="600" height="480"></canvas>
+    <div id="status">Active Sessions: <span id="active-count">0</span></div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');\n        ctx.imageSmoothingEnabled = false;\n        ctx.scale(0.75, 0.8);
+        const spriteImage = new Image();
+        spriteImage.src = 'WorkerSheetBrownWhite.png';
+
+        // Wait for image load
+        let loaded = false;
+        spriteImage.onload = function() {
+            loaded = true;
+            init();
+        };
+
+        const OFFICE_WIDTH = 800;
+        const OFFICE_HEIGHT = 600;
+        const SPRITE_SIZE = 16;
+
+        const desks = [
+            {x: 100, y: 100},
+            {x: 300, y: 100},
+            {x: 500, y: 100},
+            {x: 100, y: 400},
+            {x: 300, y: 400},
+            {x: 500, y: 400}
+        ];
+
+        const watercooler = {x: 700, y: 200};
+
+        const mainAgentPos = {x: 400, y: 300};
+
+        class Worker {
+            constructor(id, isBusy) {
+                this.id = id;
+                this.isBusy = isBusy;
+                this.pos = {x: Math.random() * OFFICE_WIDTH, y: Math.random() * OFFICE_HEIGHT};
+                this.target = null;
+                this.speed = 0.5;
+                this.direction = 'down';
+                this.state = 'walking';
+                this.frame = 0;
+                this.frameCount = 4;
+                this.timer = 0;
+                this.animationSpeed = 8; // frames per animation step
+                this.pickTarget();
+            }
+
+            getDirection(from, to) {
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    return dx > 0 ? 'right' : 'left';
+                } else {
+                    return dy > 0 ? 'down' : 'up';
+                }
+            }
+
+            pickTarget() {
+                if (this.isBusy) {
+                    const deskIdx = Math.floor(Math.random() * desks.length);
+                    const desk = desks[deskIdx];
+                    this.target = {x: desk.x + 16, y: desk.y + 40}; // in front
+                    this.direction = this.getDirection(this.pos, this.target);
+                } else {
+                    if (Math.random() > 0.5) {
+                        // random wander
+                        this.target = {
+                            x: 50 + Math.random() * (OFFICE_WIDTH - 100),
+                            y: 50 + Math.random() * (OFFICE_HEIGHT - 100)
+                        };
+                    } else {
+                        // to coffee
+                        this.target = {x: watercooler.x + 16, y: watercooler.y + 20};
+                    }
+                    this.direction = this.getDirection(this.pos, this.target);
+                }
+                this.state = 'walking';
+                this.frame = 0;
+                this.timer = 0;
+            }
+
+            update() {
+                this.timer++;
+                if (this.state === 'walking') {
+                    const dx = this.target.x - this.pos.x;
+                    const dy = this.target.y - this.pos.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < this.speed + 1) {
+                        this.pos = {...this.target};
+                        this.state = this.isBusy ? 'working' : 'idling';
+                        this.timer = 0;
+                        this.frame = 0;
+                    } else {
+                        const angle = Math.atan2(dy, dx);
+                        this.pos.x += Math.cos(angle) * this.speed;
+                        this.pos.y += Math.sin(angle) * this.speed;
+                        this.frame = Math.floor(this.timer / this.animationSpeed) % this.frameCount;
+                    }
+                    // Update direction
+                    const newDir = this.getDirection(this.pos, this.target);
+                    if (newDir !== this.direction) this.direction = newDir;
+                } else if (this.state === 'working' || this.state === 'idling') {
+                    const duration = this.isBusy ? 300 : 200; // longer for working
+                    if (this.timer > duration) {
+                        this.pickTarget();
+                    } else {
+                        this.frame = Math.floor(this.timer / 20) % 4;
+                    }
+                }
+            }
+
+            getSpritePos() {
+                let row, col;
+                if (this.state === 'walking') {
+                    const walkRows = {down: 1, left: 2, right: 3, up: 4};
+                    row = walkRows[this.direction] || 1;
+                    col = this.frame;
+                } else if (this.state === 'working') {
+                    row = 5; // assume typing row
+                    col = this.frame % 4;
+                } else {
+                    row = 0; // idle
+                    col = 0;
+                }
+                return {sx: col * SPRITE_SIZE, sy: row * SPRITE_SIZE};
+            }
+
+            draw() {
+                if (!loaded) return;
+                const {sx, sy} = this.getSpritePos();
+                ctx.drawImage(spriteImage, sx, sy, SPRITE_SIZE, SPRITE_SIZE,
+                              Math.floor(this.pos.x - 8), Math.floor(this.pos.y - 16),
+                              SPRITE_SIZE, SPRITE_SIZE);
+            }
+        }
+
+        class MainAgent {
+            constructor() {
+                this.pos = {...mainAgentPos};
+                this.gestures = ['idle', 'wave', 'think'];
+                this.currentGesture = 0;
+                this.timer = 0;
+                this.frame = 0;
+            }
+
+            update() {
+                this.timer++;
+                if (this.timer > 180) { // change every 3s @60fps
+                    this.currentGesture = (this.currentGesture + 1) % this.gestures.length;
+                    this.timer = 0;
+                }
+                this.frame = Math.floor(this.timer / 10) % 4;
+            }
+
+            draw() {
+                if (!loaded) return;
+                let row = 6 + this.currentGesture; // assume gesture rows 6,7,8
+                const sx = this.frame * SPRITE_SIZE;
+                const sy = row * SPRITE_SIZE;
+                ctx.drawImage(spriteImage, sx, sy, SPRITE_SIZE, SPRITE_SIZE,
+                              this.pos.x - 8, this.pos.y - 16, SPRITE_SIZE, SPRITE_SIZE);
+            }
+        }
+
+        let workers = [];
+        let mainAgent;
+        let animationId;
+
+        function init() {
+            mainAgent = new MainAgent();
+            updateOffice();
+            animate();
+        }
+
+        function animate() {
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, OFFICE_WIDTH, OFFICE_HEIGHT);
+
+            // Draw desks
+            ctx.fillStyle = '#8B4513';
+            desks.forEach(desk => {
+                ctx.fillRect(desk.x, desk.y, 48, 32);
+            });
+
+            // Draw watercooler
+            ctx.fillStyle = '#4169E1';
+            ctx.fillRect(watercooler.x, watercooler.y, 32, 48);
+
+            mainAgent.update();
+            mainAgent.draw();
+
+            workers.forEach(worker => {
+                worker.update();
+                worker.draw();
+            });
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function updateOffice() {
+            const activeSpan = document.getElementById('active-count');
+            fetch('/sessions.json')
+                .then(response => response.json())
+                .then(data => {
+                    let numWorkers = Math.max(0, Math.min(6, data.active || 0));
+                    activeSpan.textContent = numWorkers;
+
+                    // Adjust workers
+                    while (workers.length > numWorkers) {
+                        workers.pop();
+                    }
+                    while (workers.length < numWorkers) {
+                        const isBusy = Math.random() > 0.4;
+                        workers.push(new Worker(workers.length, isBusy));
+                    }
+                    // Optionally refresh states
+                    workers.forEach(w => {
+                        if (Math.random() > 0.7) w.isBusy = !w.isBusy; // occasional change
+                    });
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    let numWorkers = 3;
+                    activeSpan.textContent = numWorkers;
+                    // Similar adjustment with fallback
+                });
+        }
+
+        // Initial update
+        if (loaded) updateOffice();
+        setInterval(updateOffice, 30000);
+
+        function startAnimation() {
+            if (animationId) cancelAnimationFrame(animationId);
+            animate();
+        }
+        if (loaded) startAnimation();
+    </script>
+</body>
+</html>

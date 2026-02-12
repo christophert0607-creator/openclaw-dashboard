@@ -1,0 +1,1 @@
+# OpenClaw Dashboard Project\n\n## 專案概述\n開發一個多代理架構的自訂 Dashboard 面板，用於監控 OpenClaw 代理。\n\n## 代理結構\n- Main Agent: 通知處理\n- Project Director (PD): 領導開發\n- 團隊: Frontend Dev, Backend Dev, Designer, Tester, Integrator\n\n## 工作流程\n步驟1: PD 規劃並分配線框圖給 Designer。\n
